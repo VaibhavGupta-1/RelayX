@@ -1,0 +1,6 @@
+# RelayX Local Properties Template
+# DO NOT include real keys here. This is purely an example template for local setup.
+# Developers must create their own 'local.properties' and fill these fields in themselves.
+
+SUPABASE_URL=your_supabase_url_here
+SUPABASE_ANON_KEY=your_supabase_anon_key_here

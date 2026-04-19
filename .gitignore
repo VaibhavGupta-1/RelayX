@@ -1,0 +1,32 @@
+# Secrets
+local.properties
+.env
+
+# Firebase
+google-services.json
+
+# Keystore
+*.jks
+*.keystore
+
+# Build
+/build
+/.gradle
+
+# IDE
+.idea
+*.iml
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+/captures
+
+# macOS Native
+.DS_Store
+
+# Android Native Build
+.externalNativeBuild
+.cxx
