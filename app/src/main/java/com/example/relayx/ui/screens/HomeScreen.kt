@@ -51,8 +51,8 @@ fun HomeScreen(
     mainUiState: MainUiState,
     transferUiState: TransferUiState,
     onReceiverCodeChanged: (String) -> Unit,
-    onFileSelected: (Uri, String) -> Unit,
-    onSendFile: () -> Unit,
+    onFilesSelected: (List<Pair<Uri, String>>) -> Unit,
+    onSendFiles: () -> Unit,
     onClearError: () -> Unit,
     onClearSendSuccess: () -> Unit,
     onNavigateToTransfers: () -> Unit,
@@ -62,15 +62,17 @@ fun HomeScreen(
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
 
-    // File picker launcher using ActivityResultContracts
+    // File picker launcher using ActivityResultContracts (Multiple files)
     val filePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            val fileName = FileUtils.getFileName(context, it)
-            Log.d("RelayXDebug", "UI: File selected: $fileName")
-            Log.d("RelayXDebug", "UI: File URI: $it")
-            onFileSelected(it, fileName)
+        contract = ActivityResultContracts.GetMultipleContents()
+    ) { uris: List<Uri> ->
+        if (uris.isNotEmpty()) {
+            val files = uris.map { uri ->
+                val fileName = FileUtils.getFileName(context, uri)
+                Log.d("RelayXDebug", "UI: File selected: $fileName")
+                uri to fileName
+            }
+            onFilesSelected(files)
         }
     }
 
@@ -224,7 +226,6 @@ fun HomeScreen(
                     onDone = { focusManager.clearFocus() }
                 ),
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !transferUiState.isSending,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Primary,
                     cursorColor = Primary
@@ -238,8 +239,7 @@ fun HomeScreen(
                 onClick = { filePickerLauncher.launch("*/*") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
-                contentPadding = PaddingValues(vertical = 14.dp),
-                enabled = !transferUiState.isSending
+                contentPadding = PaddingValues(vertical = 14.dp)
             ) {
                 Icon(
                     imageVector = Icons.Outlined.AttachFile,
@@ -248,10 +248,10 @@ fun HomeScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (transferUiState.selectedFileName.isNotBlank())
-                        transferUiState.selectedFileName
+                    text = if (transferUiState.selectedFiles.isNotEmpty())
+                        "${transferUiState.selectedFiles.size} file(s) selected"
                     else
-                        "Select File",
+                        "Select Files",
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -263,31 +263,21 @@ fun HomeScreen(
             Button(
                 onClick = {
                     Log.d("RelayXDebug", "UI: Send button clicked")
-                    Log.d("RelayXDebug", "UI: receiverCode=${transferUiState.receiverCode}, fileName=${transferUiState.selectedFileName}")
+                    Log.d("RelayXDebug", "UI: receiverCode=${transferUiState.receiverCode}, filesCount=${transferUiState.selectedFiles.size}")
                     focusManager.clearFocus()
-                    onSendFile()
+                    onSendFiles()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
                 shape = RoundedCornerShape(14.dp),
-                enabled = !transferUiState.isSending &&
-                        transferUiState.receiverCode.length == 6 &&
-                        transferUiState.selectedFileUri != null &&
+                enabled = transferUiState.receiverCode.length == 6 &&
+                        transferUiState.selectedFiles.isNotEmpty() &&
                         mainUiState.userCode.isNotEmpty(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Primary
                 )
             ) {
-                if (transferUiState.isSending) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(22.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text("Sending...")
-                } else {
                     Icon(
                         imageVector = Icons.Filled.Send,
                         contentDescription = null,
@@ -295,49 +285,9 @@ fun HomeScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Send File",
+                        text = "Send File${if (transferUiState.selectedFiles.size > 1) "s" else ""}",
                         fontWeight = FontWeight.SemiBold
                     )
-                }
-            }
-
-            // ─── Upload Progress Bar ────────────────────────────────
-            // Shows LinearProgressIndicator during upload with milestone progress
-            AnimatedVisibility(
-                visible = transferUiState.isSending,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "Uploading...",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "${transferUiState.progress}%",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Medium,
-                            color = Primary
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    LinearProgressIndicator(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(6.dp),
-                        color = Primary,
-                        trackColor = Primary.copy(alpha = 0.12f)
-                    )
-                }
             }
 
             Spacer(modifier = Modifier.height(32.dp))

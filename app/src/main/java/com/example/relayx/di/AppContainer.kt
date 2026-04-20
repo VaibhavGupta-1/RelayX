@@ -10,6 +10,7 @@ import com.example.relayx.domain.usecase.ObserveTransfersUseCase
 import com.example.relayx.domain.usecase.SendFileUseCase
 import com.example.relayx.services.FirestoreService
 import com.example.relayx.services.SupabaseService
+import com.example.relayx.data.local.DownloadStateStore
 
 /**
  * Manual dependency injection container.
@@ -28,6 +29,10 @@ class AppContainer(private val context: Context) {
 
     val supabaseService: SupabaseService by lazy {
         SupabaseService(context)
+    }
+
+    val downloadStateStore: DownloadStateStore by lazy {
+        DownloadStateStore(context)
     }
 
     // ─── Repositories ───────────────────────────────────────────────────

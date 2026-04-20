@@ -8,9 +8,12 @@ import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.http.content.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import java.io.InputStream
+import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.writeFully
 import com.example.relayx.BuildConfig
 
 private const val TAG = "RelayXDebug"
@@ -77,113 +80,67 @@ object SupabaseClient {
         Log.d(TAG, "  storagePath: $storagePath")
         Log.d(TAG, "  contentType: $contentType")
         Log.d(TAG, "  fileSize: ${if (fileSize > 0) "$fileSize bytes (${fileSize / 1024} KB)" else "unknown"}")
-        Log.d(TAG, "  bucket: $STORAGE_BUCKET")
 
         return try {
-            // Report initial progress
             onProgress(0)
 
-            // Read file bytes using buffered streaming
-            Log.d(TAG, "Reading InputStream into bytes...")
-            val fileBytes = readStreamInChunks(inputStream, fileSize, onProgress)
-            Log.d(TAG, "InputStream read complete. Bytes read: ${fileBytes.size} (${fileBytes.size / 1024} KB)")
-
-            // Report that file reading is complete (60% milestone)
-            onProgress(60)
-            Log.d(TAG, "Upload progress: 60% (stream read complete)")
-
             val uploadUrl = "$SUPABASE_URL/storage/v1/object/$STORAGE_BUCKET/$storagePath"
-            // Log.d(TAG, "Upload URL: $uploadUrl") -- Masked for security
-            Log.d(TAG, "Sending POST request to Supabase Storage...")
+            Log.d(TAG, "Sending POST request to Supabase Storage with streaming...")
 
             val response: HttpResponse = httpClient.post(uploadUrl) {
                 header("Authorization", "Bearer $SUPABASE_API_KEY")
                 header("apikey", SUPABASE_API_KEY)
-                // Upsert mode: overwrite if file already exists (handles retries cleanly)
                 header("x-upsert", "true")
-                contentType(ContentType.parse(contentType))
-                setBody(fileBytes)
+
+                // Provide streamed outgoing content
+                setBody(object : OutgoingContent.WriteChannelContent() {
+                    override val contentLength: Long? = if (fileSize > 0) fileSize else null
+                    override val contentType: ContentType = ContentType.parse(contentType)
+
+                    override suspend fun writeTo(channel: ByteWriteChannel) {
+                        val buffer = ByteArray(UPLOAD_BUFFER_SIZE)
+                        var bytesSent: Long = 0
+                        var lastReportedProgress = 0
+
+                        inputStream.use { stream ->
+                            while (true) {
+                                val count = stream.read(buffer)
+                                if (count == -1) break
+                                channel.writeFully(buffer, 0, count)
+                                bytesSent += count
+
+                                val len = contentLength
+                                if (len != null && len > 0) {
+                                    val progress = ((bytesSent.toFloat() / len) * 100).toInt().coerceIn(0, 100)
+                                    // Throttle progress updates to every 5%
+                                    if (progress >= lastReportedProgress + 5 || progress == 100) {
+                                        lastReportedProgress = progress
+                                        // Dispatch to onProgress callback
+                                        onProgress(progress)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                })
             }
 
             Log.d(TAG, "Supabase response status: ${response.status.value} (${response.status.description})")
-
-            // Report upload complete
-            onProgress(90)
-            Log.d(TAG, "Upload progress: 90% (HTTP request complete)")
 
             if (response.status == HttpStatusCode.OK || response.status == HttpStatusCode.Created) {
                 val publicUrl = "$SUPABASE_URL/storage/v1/object/public/$STORAGE_BUCKET/$storagePath"
                 onProgress(100)
                 Log.d(TAG, "✅ Upload SUCCESSFUL")
-                Log.d(TAG, "  File path: $storagePath")
-                Log.d(TAG, "  Public URL generated successfully.")
-                Log.d(TAG, "  Upload progress: 100%")
-                Log.d(TAG, "───────────────────────────────────────────────")
                 Result.success(publicUrl)
             } else {
                 val errorBody = response.bodyAsText()
                 Log.e(TAG, "❌ Upload FAILED — HTTP ${response.status.value}")
-                Log.e(TAG, "  Error response body: $errorBody")
-                Log.e(TAG, "  Bucket: $STORAGE_BUCKET")
-                Log.e(TAG, "───────────────────────────────────────────────")
-                Result.failure(
-                    Exception("Upload failed [${response.status.value}]: $errorBody")
-                )
+                Result.failure(Exception("Upload failed [${response.status.value}]: $errorBody"))
             }
         } catch (e: Exception) {
             Log.e(TAG, "❌ Upload EXCEPTION: ${e.javaClass.simpleName}", e)
-            Log.e(TAG, "  Message: ${e.message}")
-            Log.e(TAG, "  storagePath: $storagePath")
-            Log.e(TAG, "  bucket: $STORAGE_BUCKET")
-            Log.e(TAG, "───────────────────────────────────────────────")
             Result.failure(e)
         }
-    }
-
-    /**
-     * Reads an InputStream in chunks, reporting progress along the way.
-     * Caps progress reports between 0–50% during the read phase (upload is 50–100%).
-     */
-    private suspend fun readStreamInChunks(
-        inputStream: InputStream,
-        totalSize: Long,
-        onProgress: suspend (Int) -> Unit
-    ): ByteArray {
-        if (totalSize <= 0) {
-            // Unknown size: read all at once and report 30% after read
-            Log.d(TAG, "File size unknown — reading all bytes at once")
-            val bytes = inputStream.readBytes()
-            Log.d(TAG, "Read ${bytes.size} bytes (${bytes.size / 1024} KB)")
-            onProgress(30)
-            Log.d(TAG, "Upload progress: 30% (bytes read, size was unknown)")
-            return bytes
-        }
-
-        // Known size: read in chunks and report intermediate progress
-        Log.d(TAG, "Reading file in ${UPLOAD_BUFFER_SIZE / 1024}KB chunks (total: ${totalSize / 1024} KB)")
-        val buffer = ByteArray(UPLOAD_BUFFER_SIZE)
-        val output = java.io.ByteArrayOutputStream(totalSize.toInt())
-        var bytesRead: Long = 0
-        var lastReportedProgress = 0
-
-        while (true) {
-            val count = inputStream.read(buffer)
-            if (count == -1) break
-
-            output.write(buffer, 0, count)
-            bytesRead += count
-
-            // Map reading progress to 0–50% of total progress
-            val readProgress = ((bytesRead.toFloat() / totalSize) * 50).toInt().coerceIn(0, 50)
-            if (readProgress >= lastReportedProgress + 10) {
-                lastReportedProgress = readProgress
-                onProgress(readProgress)
-                Log.d(TAG, "Upload progress: $readProgress% (read $bytesRead / $totalSize bytes)")
-            }
-        }
-
-        Log.d(TAG, "Chunk reading complete. Total bytes: ${output.size()}")
-        return output.toByteArray()
     }
 
     /**

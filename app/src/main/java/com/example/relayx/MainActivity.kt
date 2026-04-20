@@ -29,8 +29,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Initialize DI container with application context (survives config changes)
-        appContainer = AppContainer(applicationContext)
+        // Retrieve DI container from Application
+        appContainer = (application as RelayXApplication).container
 
         setContent {
             RelayXTheme {
@@ -72,8 +72,8 @@ class MainActivity : ComponentActivity() {
                             mainUiState = mainUiState,
                             transferUiState = transferUiState,
                             onReceiverCodeChanged = transferViewModel::onReceiverCodeChanged,
-                            onFileSelected = transferViewModel::onFileSelected,
-                            onSendFile = { transferViewModel.sendFile(mainUiState.userCode) },
+                            onFilesSelected = transferViewModel::onFilesSelected,
+                            onSendFiles = { transferViewModel.sendFiles(mainUiState.userCode) },
                             onClearError = {
                                 mainViewModel.clearError()
                                 transferViewModel.clearError()
@@ -89,6 +89,7 @@ class MainActivity : ComponentActivity() {
                         TransferScreen(
                             transfers = transferUiState.transfers,
                             downloadStates = transferUiState.downloadStates,
+                            currentUserCode = mainUiState.userCode,
                             onDownload = transferViewModel::startDownload,
                             onNavigateBack = { navController.popBackStack() }
                         )

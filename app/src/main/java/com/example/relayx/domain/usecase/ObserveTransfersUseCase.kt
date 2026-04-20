@@ -12,10 +12,10 @@ class ObserveTransfersUseCase(
 ) {
 
     /**
-     * @param receiverCode The current user's code to filter incoming transfers.
-     * @return A Flow emitting the list of transfers whenever changes occur.
+     * @param userCode The current user's code to filter transfers.
+     * @return A Flow emitting the list of all transfers involving the user.
      */
-    operator fun invoke(receiverCode: String): Flow<List<Transfer>> {
-        return transferRepository.observeIncomingTransfers(receiverCode)
+    operator fun invoke(userCode: String): Flow<List<Transfer>> {
+        return transferRepository.observeAllTransfersForUser(userCode)
     }
 }

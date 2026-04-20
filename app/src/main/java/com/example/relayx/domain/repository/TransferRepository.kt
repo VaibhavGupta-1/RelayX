@@ -30,10 +30,9 @@ interface TransferRepository {
     ): Result<Transfer>
 
     /**
-     * Observes incoming transfers for a given receiver code in real-time.
-     * Uses Firestore snapshot listener via callbackFlow.
+     * Observes all transfers for a user (both sent and received) in real-time.
      */
-    fun observeIncomingTransfers(receiverCode: String): Flow<List<Transfer>>
+    fun observeAllTransfersForUser(userCode: String): Flow<List<Transfer>>
 
     /**
      * Updates the status and progress of a transfer.

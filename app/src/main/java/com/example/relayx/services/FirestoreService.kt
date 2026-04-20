@@ -2,10 +2,12 @@ package com.example.relayx.services
 
 import android.util.Log
 import com.example.relayx.data.model.Transfer
-import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.ktx.firestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -159,6 +161,38 @@ class FirestoreService {
         // Clean up listener when the Flow collector cancels
         awaitClose {
             Log.d(TAG, "Firestore: snapshot listener REMOVED for receiverCode=$receiverCode")
+            listenerRegistration.remove()
+        }
+    }
+
+    /**
+     * Observes ALL transfers where the user is either the sender OR receiver.
+     */
+    fun observeAllTransfersForUser(userCode: String): Flow<List<Transfer>> = callbackFlow {
+        Log.d(TAG, "Firestore: observeAllTransfersForUser() started → userCode=$userCode")
+        val listenerRegistration: ListenerRegistration = transfersCollection
+            .where(Filter.or(
+                Filter.equalTo("senderCode", userCode),
+                Filter.equalTo("receiverCode", userCode)
+            ))
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e(TAG, "Firestore: all-transfers listener ERROR: ${error.message}", error)
+                    close(error)
+                    return@addSnapshotListener
+                }
+
+                val transfers = snapshot?.documents?.mapNotNull { doc ->
+                    documentToTransfer(doc)
+                } ?: emptyList()
+
+                Log.d(TAG, "Firestore: all-transfers snapshot update → ${transfers.size} transfers")
+                trySend(transfers)
+            }
+
+        awaitClose {
+            Log.d(TAG, "Firestore: all-transfers listener REMOVED for userCode=$userCode")
             listenerRegistration.remove()
         }
     }

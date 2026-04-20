@@ -155,9 +155,9 @@ class TransferRepositoryImpl(
         }
     }
 
-    override fun observeIncomingTransfers(receiverCode: String): Flow<List<Transfer>> {
-        Log.d(TAG, "observeIncomingTransfers() → receiverCode=$receiverCode")
-        return firestoreService.observeTransfersForReceiver(receiverCode)
+    override fun observeAllTransfersForUser(userCode: String): Flow<List<Transfer>> {
+        Log.d(TAG, "observeAllTransfersForUser() → userCode=$userCode")
+        return firestoreService.observeAllTransfersForUser(userCode)
     }
 
     override suspend fun updateTransferStatus(

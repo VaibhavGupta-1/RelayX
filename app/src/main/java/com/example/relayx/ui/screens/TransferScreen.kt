@@ -20,6 +20,7 @@ import com.example.relayx.data.model.Transfer
 import com.example.relayx.data.model.TransferStatus
 import com.example.relayx.ui.components.TransferItem
 import com.example.relayx.ui.theme.*
+import com.example.relayx.ui.viewmodel.DownloadProgress
 
 /**
  * Modern TransferScreen with premium neutral styling.
@@ -27,8 +28,9 @@ import com.example.relayx.ui.theme.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransferScreen(
+    currentUserCode: String,
     transfers: List<Transfer>,
-    downloadStates: Map<String, TransferStatus>,
+    downloadStates: Map<String, DownloadProgress>,
     onDownload: (Transfer) -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
@@ -36,7 +38,7 @@ fun TransferScreen(
     // Count active (uploading + downloading) transfers for badge
     val activeCount = remember(transfers, downloadStates) {
         transfers.count { transfer ->
-            val effective = downloadStates[transfer.id]
+            val effective = downloadStates[transfer.id]?.status
                 ?: TransferStatus.fromValue(transfer.status)
             effective == TransferStatus.UPLOADING || effective == TransferStatus.DOWNLOADING
         }
@@ -148,12 +150,13 @@ fun TransferScreen(
                     items = transfers,
                     key = { it.id }
                 ) { transfer ->
-                    val effectiveStatus = downloadStates[transfer.id]
-                        ?: TransferStatus.fromValue(transfer.status)
+                    val effectiveProgress = downloadStates[transfer.id]
+                        ?: DownloadProgress(TransferStatus.fromValue(transfer.status), 0)
 
                     TransferItem(
                         transfer = transfer,
-                        effectiveStatus = effectiveStatus,
+                        effectiveProgress = effectiveProgress,
+                        currentUserCode = currentUserCode,
                         onDownload = onDownload,
                         modifier = Modifier.animateItem()
                     )

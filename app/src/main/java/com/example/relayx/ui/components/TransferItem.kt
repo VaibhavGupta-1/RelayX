@@ -31,6 +31,7 @@ import com.example.relayx.data.model.FileType
 import com.example.relayx.data.model.Transfer
 import com.example.relayx.data.model.TransferStatus
 import com.example.relayx.ui.theme.*
+import com.example.relayx.ui.viewmodel.DownloadProgress
 import com.example.relayx.utils.FileUtils
 
 private const val TAG = "RelayXDebug"
@@ -41,18 +42,27 @@ private const val TAG = "RelayXDebug"
 @Composable
 fun TransferItem(
     transfer: Transfer,
-    effectiveStatus: TransferStatus,
+    effectiveProgress: DownloadProgress,
+    currentUserCode: String,
     onDownload: (Transfer) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val isSender = transfer.senderCode == currentUserCode
     val fileType = remember(transfer.fileName) { FileType.fromFileName(transfer.fileName) }
-    val statusConfig = remember(effectiveStatus) { getStatusConfig(effectiveStatus) }
+    val effectiveStatus = effectiveProgress.status
+    val statusConfig = remember(effectiveStatus, isSender) { getStatusConfig(effectiveStatus, isSender) }
     val isClickable = effectiveStatus == TransferStatus.SENT || effectiveStatus == TransferStatus.DOWNLOADED
+
+    val targetProgress = if (effectiveStatus == TransferStatus.DOWNLOADING) {
+        effectiveProgress.progress / 100f
+    } else {
+        transfer.progress / 100f
+    }
 
     // Progress animation
     val animatedProgress by animateFloatAsState(
-        targetValue = transfer.progress / 100f,
+        targetValue = targetProgress,
         animationSpec = tween(durationMillis = 600),
         label = "progress"
     )
@@ -139,7 +149,8 @@ fun TransferItem(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "From: ${transfer.senderCode} • ${getFileTypeLabel(fileType)}",
+                        text = if (isSender) "To: ${transfer.receiverCode} • ${getFileTypeLabel(fileType)}"
+                               else "From: ${transfer.senderCode} • ${getFileTypeLabel(fileType)}",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -195,7 +206,7 @@ fun TransferItem(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Receiving...",
+                                text = if (isSender) "Uploading..." else "Receiving...",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -219,21 +230,46 @@ fun TransferItem(
                 }
 
                 TransferStatus.DOWNLOADING -> {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            color = StatusDownloading,
-                            strokeWidth = 2.dp
-                        )
-                        Text(
-                            text = "Downloading...",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Medium,
-                            color = StatusDownloading
-                        )
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    color = StatusDownloading,
+                                    strokeWidth = 2.dp
+                                )
+                                Text(
+                                    text = "Downloading...",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Medium,
+                                    color = StatusDownloading
+                                )
+                            }
+                            Text(
+                                text = "${effectiveProgress.progress}%",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = StatusDownloading
+                            )
+                        }
+                        if (effectiveProgress.progress > 0) {
+                            LinearProgressIndicator(
+                                progress = { animatedProgress },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(4.dp)
+                                    .clip(RoundedCornerShape(2.dp)),
+                                color = StatusDownloading,
+                                trackColor = StatusDownloading.copy(alpha = 0.1f),
+                            )
+                        }
                     }
                 }
 
@@ -248,7 +284,7 @@ fun TransferItem(
 
                 TransferStatus.SENT -> {
                     Text(
-                        text = "Ready to download",
+                        text = if (isSender) "Available for download" else "Ready to download",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -345,10 +381,10 @@ private data class StatusConfig(
     val label: String
 )
 
-private fun getStatusConfig(status: TransferStatus): StatusConfig {
+private fun getStatusConfig(status: TransferStatus, isSender: Boolean): StatusConfig {
     return when (status) {
-        TransferStatus.UPLOADING -> StatusConfig(StatusUploading, "Uploading")
-        TransferStatus.SENT -> StatusConfig(StatusSent, "Sent")
+        TransferStatus.UPLOADING -> StatusConfig(StatusUploading, if (isSender) "Uploading" else "Receiving")
+        TransferStatus.SENT -> StatusConfig(StatusSent, if (isSender) "Sent" else "Received")
         TransferStatus.DOWNLOADING -> StatusConfig(StatusDownloading, "Downloading")
         TransferStatus.DOWNLOADED -> StatusConfig(StatusDownloaded, "Saved")
         TransferStatus.FAILED -> StatusConfig(StatusFailed, "Failed")
