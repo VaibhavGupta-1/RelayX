@@ -54,7 +54,7 @@ A **6-character code** is all it takes. The rest happens in real time, in the ba
 
 RelayX is built on **Clean Architecture + MVVM**, with zero shortcuts.
 
-\```
+```
 ┌─────────────────────────────────────────────────────┐
 │                  PRESENTATION LAYER                 │
 │         Jetpack Compose  ·  ViewModel StateFlow     │
@@ -71,13 +71,13 @@ RelayX is built on **Clean Architecture + MVVM**, with zero shortcuts.
 │   Firestore Streams  ·  Supabase REST  ·  WorkMgr   │
 │        Repository interfaces as single truth        │
 └─────────────────────────────────────────────────────┘
-\```
+```
 
 ---
 
 ## ✦ How a Transfer Actually Works
 
-\```
+```
   SENDER                                        RECEIVER
     │                                               │
     │  1. App boots → anonymous 6-char code         │
@@ -100,7 +100,7 @@ RelayX is built on **Clean Architecture + MVVM**, with zero shortcuts.
     │                               7. DownloadManager invoked
     │                                  Download ID → DataStore
     │                                  File saved to device ✓
-\```
+```
 
 ---
 
@@ -150,11 +150,14 @@ RelayX is built on **Clean Architecture + MVVM**, with zero shortcuts.
 ## ✦ Screenshots
 
 <p align="center">
-  <img src="screenshots/home.png" width="30%" alt="Home Screen"/>
-  &nbsp;&nbsp;&nbsp;
-  <img src="screenshots/transfers_uploading.png" width="30%" alt="Upload in Progress"/>
-  &nbsp;&nbsp;&nbsp;
-  <img src="screenshots/transfers_downloading.png" width="30%" alt="Download in Progress"/>
+  <img width="30%" alt="Home Image" src="https://github.com/user-attachments/assets/10165d25-3348-42b1-915c-9abc9a62a362" />
+
+
+  <img width="30%" alt="Upload File" src="https://github.com/user-attachments/assets/bc39b814-93d1-4bf3-a9ed-079bbf21a521" />
+
+
+  <img width="30%"  alt="Download page" src="https://github.com/user-attachments/assets/57db3515-6281-4a61-851a-1ddcbbbb217c" />
+
 </p>
 <p align="center">
   <sub>Home Screen &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Upload in Progress &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Download in Progress</sub>
@@ -164,20 +167,20 @@ RelayX is built on **Clean Architecture + MVVM**, with zero shortcuts.
 
 ## ✦ Setup
 
-\```bash
+```bash
 # 1. Clone
 git clone https://github.com/yourusername/RelayX.git
-\```
+```
 
 **2. Add Firebase**
 Download `google-services.json` from the Firebase Console → drop it in `/app`. Enable Firestore.
 
 **3. Add Supabase credentials**
 Create / edit `local.properties` in the project root:
-\```properties
+```properties
 SUPABASE_URL="https://your-project-id.supabase.co"
 SUPABASE_KEY="your-anon-key-here"
-\```
+```
 
 **4. Build & Run**
 Sync Gradle and deploy to a **physical device** — emulators bottleneck hard on heavy I/O.
@@ -195,11 +198,11 @@ Sync Gradle and deploy to a **physical device** — emulators bottleneck hard on
 
 ## ✦ What's Next
 
-\```
+```
 [ ] FCM Push Notifications   — wake receiver devices the moment a transfer is pushed
 [ ] Resumable Uploads        — Ktor partial-stream recovery on hard network cutouts
 [ ] End-to-End Encryption    — AES-256 wrapping the InputStream before socket dispatch
-\```
+```
 
 ---
 
