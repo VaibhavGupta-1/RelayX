@@ -103,6 +103,16 @@ RelayX is built on **Clean Architecture + MVVM**, with zero shortcuts.
 ```
 
 ---
+## ✦ Demo Video
+
+A complete walkthrough demonstrating:
+- Two-device real-time transfer
+- Failure scenarios (network drop, invalid code)
+- Code architecture overview
+
+🔗 https://drive.google.com/file/d/16NzSx5lq_u6SMF0QlswfJV85SZFucgXr/view?usp=sharing
+
+---
 
 ## ✦ Tech Stack
 
@@ -146,6 +156,13 @@ RelayX is built on **Clean Architecture + MVVM**, with zero shortcuts.
 </table>
 
 ---
+## ✦ Devices Tested
+
+- Android 16 — Physical Device (Primary Testing)
+- Android 13 — Emulator
+- Network: Wi-Fi + Mobile Data (tested for transfer reliability)
+  
+---
 
 ## ✦ Screenshots
 
@@ -164,7 +181,56 @@ RelayX is built on **Clean Architecture + MVVM**, with zero shortcuts.
 </p>
 
 ---
+## ✦ Edge Case Handling
 
+### ✅ Handled
+- Invalid recipient code (validated before upload)
+- Network drop during download (handled by DownloadManager auto-resume)
+- App backgrounded during upload (WorkManager continues execution)
+- Process death during download (DataStore restores download mapping)
+
+### ⚠️ Partially Handled
+- Upload interruption (marked as FAILED, no resume support yet)
+- Real-time progress may vary depending on network conditions
+
+### ❌ Not Fully Implemented
+- Push notifications when app is closed (FCM planned)
+- End-to-end encryption (future improvement)
+  
+--- 
+
+## ✦ Known Limitations
+
+- Firestore composite indexes must be manually configured before running OR queries
+- Upload progress granularity depends on network throughput
+- Large file uploads rely on WorkManager but do not yet support resumable streams
+
+---
+
+## ✦ AI Usage
+
+AI tools (Copilot / Antigravity) were used for:
+- Debugging assistance
+- Structuring architecture ideas
+- Improving documentation quality
+
+All core logic, architecture decisions, and final implementations were reviewed, validated, and adapted manually.
+
+
+---
+## ✦ Transport Design
+
+RelayX uses a hybrid architecture:
+
+- **Firestore** → real-time metadata sync (lightweight, event-driven)
+- **Supabase Storage** → actual file transfer (scalable object storage)
+
+### Why this design?
+
+- Firestore provides instant real-time updates
+- Supabase handles large binary payloads efficiently
+- Separation ensures scalability and avoids overloading a single system
+---
 ## ✦ Setup
 
 ```bash
@@ -179,7 +245,7 @@ Download `google-services.json` from the Firebase Console → drop it in `/app`.
 Create / edit `local.properties` in the project root:
 ```properties
 SUPABASE_URL="https://your-project-id.supabase.co"
-SUPABASE_KEY="your-anon-key-here"
+SUPABASE_ANON_KEY="your-anon-key-here"
 ```
 
 **4. Build & Run**
