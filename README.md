@@ -1,69 +1,153 @@
-# 🚀 RelayX
 
-**Seamless, Secure, and Built for Scale: Real-Time File Transfers Simplified.**
+<div align="center"> 
 
----
 
-## 📖 Overview
 
-RelayX is a robust, real-time Android file transfer application designed to securely transport files across completely unlinked devices over the public internet. Instead of forcing users through cumbersome login flows or local-only network constraints (like Bluetooth or Wi-Fi Direct), RelayX uses a dead-simple **6-character unique pairing code**. 
+██████╗ ███████╗██╗      █████╗ ██╗   ██╗██╗  ██╗
+██╔══██╗██╔════╝██║     ██╔══██╗╚██╗ ██╔╝╚██╗██╔╝
+██████╔╝█████╗  ██║     ███████║ ╚████╔╝  ╚███╔╝ 
+██╔══██╗██╔══╝  ██║     ██╔══██║ ██╔██╗  ██╔██╗  
+██║  ██║███████╗███████╗██║  ██║██╔╝ ██╗██╔╝ ██╗
+╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝
 
-Enter the code, select your files, and watch them stream over the cloud in real-time. Built from the ground up prioritizing modern Android development standards, RelayX survives process death, streams bytes to avoid Out-Of-Memory (OOM) crashes, and operates on a strictly separated Clean Architecture model.
 
----
+**Seamless. Secure. Built for Scale.**
 
-## ✨ Features
+*Real-time file transfers across any two devices — no accounts, no cables, no friction.*
 
-* **⚡ Real-Time File Transfer**: Instantaneous UI synchronization between sender and receiver via Firebase Firestore listeners.
-* **📂 Multi-File Batching**: Select 1, 5, or 20 files instantly using modern `ActivityResultContracts` and dispatch them in parallel.
-* **🛡️ Background Upload Resiliency**: Uploads are delegated to Android's `WorkManager`, guaranteeing file delivery even if the user swipes the app away or switches to another task.
-* **💾 Persistent Downloading**: Receivers ingest files directly via Android's native `DownloadManager`. Active download IDs are committed to `Preferences DataStore`, guaranteeing recovery from process death without data loss.
-* **📱 Anonymous Onboarding**: 100% frictionless. No user accounts, passwords, or emails.
-* **🧠 True Clean Architecture**: Strict separation of concerns (Presentation → Domain UseCases → Repositories → Data Sources).
+<br/>
 
----
+![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
+![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)
 
-## 🧠 Architecture
-
-RelayX strictly adheres to **Clean Architecture** patterns married with the **MVVM** presentation model. 
-
-* **Presentation Layer**: Built completely in Jetpack Compose, state is observed via unidirectional MVI-style `StateFlow` structures from `ViewModel`.
-* **Domain Layer**: Houses pure business logic (`SendFileUseCase`, `ObserveTransfersUseCase`) isolated completely from Android Context imports.
-* **Data Layer**: Repositories abstract network implementations (Firestore streams, Supabase REST wrappers, WorkManager delegates) providing a single source of truth.
-
-**Data Flow Sequence:**
-*(Jetpack Compose UI) → (ViewModel StateFlow) → (Domain UseCase) → (Repository Interface) → (Remote / Local Data Sources).*
+</div>
 
 ---
 
-## ⚙️ Tech Stack
+## ✦ What is RelayX?
 
-* **Kotlin**: Primary language, utilizing maximum idiomatic functional paradigms.
-* **Jetpack Compose**: Completely declarative, dynamic UI toolkit for Android.
-* **Firebase Firestore**: Powering blistering fast NoSQL document updates and snapshot listeners.
-* **Supabase Storage**: Object storage combined with byte-chunked Ktor POST streams for massive file uploads without memory bloat.
-* **Android WorkManager**: Orchestrates parallel reliable background uploads.
-* **Android DownloadManager**: OS-level handling of massive file retrieval and caching.
-* **Coroutines & Flow**: Complete asynchronous pipeline utilizing `StateFlow`, `SharedFlow`, and `callbackFlow` wrappers for callback-heavy SDKs.
-* **DataStore (Preferences)**: Preserving critical download pointers.
-* **Coil**: Image decoding and memory-efficient URI projection.
+> **Enter a code. Pick your files. Done.**
+
+RelayX is a production-grade Android file transfer app that moves files between completely unlinked devices over the public internet — no login flows, no local network dependencies, no Bluetooth pairing hell.
+
+A **6-character code** is all it takes. The rest happens in real time, in the background, at scale.
 
 ---
 
-## 🔄 How It Works
+## ✦ Feature Highlights
 
-1. **Initialization:** The app anonymously negotiates a randomly generated 6-character user code and saves it to Firestore.
-2. **Pairing:** Senders input their intended target's 6-character code into the Home Screen.
-3. **Dispatch:** The Sender picks extensive files. For each URI, a `WorkRequest` is fired into `WorkManager`.
-4. **Streaming:** The device skips RAM-caching and natively streams the `InputStream` directly into Supabase Storage using Ktor sockets, pinging progress out to Firestore every ~5%.
-5. **Real-time Read:** The Receiver runs an identical instance querying `Filter.or(...)`. They instantaneously see the upload happening live.
-6. **OS Download:** Once marked `SENT`, the Receiver invokes the OS `DownloadManager`. The ID is committed to `DataStore`, and the file writes safely to local device storage.
+| | Feature | What it means for you |
+|---|---|---|
+| ⚡ | **Real-Time Sync** | UI updates live as bytes move — sender and receiver stay in perfect sync via Firestore listeners |
+| 📂 | **Multi-File Batching** | Send 1, 5, or 20 files at once using modern `ActivityResultContracts` — dispatched in parallel |
+| 🛡️ | **Background Resiliency** | `WorkManager` handles uploads — swipe the app away, it still delivers |
+| 💾 | **Process-Death-Proof Downloads** | Active download IDs persisted in `Preferences DataStore` — survives any crash or kill |
+| 👤 | **Zero-Friction Onboarding** | No accounts. No passwords. No emails. Completely anonymous. |
+| 🧠 | **True Clean Architecture** | Hard separation: Presentation → Domain → Repository → Data Source |
 
 ---
 
-## 📸 Screenshots
+## ✦ Architecture
 
-*(Replace placeholders with actual project screenshots)*
+RelayX is built on **Clean Architecture + MVVM**, with zero shortcuts.
+
+\```
+┌─────────────────────────────────────────────────────┐
+│                  PRESENTATION LAYER                 │
+│         Jetpack Compose  ·  ViewModel StateFlow     │
+└────────────────────┬────────────────────────────────┘
+                     │  MVI-style unidirectional data flow
+┌────────────────────▼────────────────────────────────┐
+│                   DOMAIN LAYER                      │
+│     SendFileUseCase  ·  ObserveTransfersUseCase     │
+│          Pure Kotlin — zero Android imports         │
+└────────────────────┬────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────┐
+│                    DATA LAYER                       │
+│   Firestore Streams  ·  Supabase REST  ·  WorkMgr   │
+│        Repository interfaces as single truth        │
+└─────────────────────────────────────────────────────┘
+\```
+
+---
+
+## ✦ How a Transfer Actually Works
+
+\```
+  SENDER                                        RECEIVER
+    │                                               │
+    │  1. App boots → anonymous 6-char code         │
+    │     generated & saved to Firestore            │
+    │                                               │
+    │  2. Sender inputs receiver's code ──────────► │
+    │                                               │
+    │  3. Files picked → WorkRequest fired          │
+    │     per URI into WorkManager                  │
+    │                                               │
+    │  4. InputStream streamed directly             │
+    │     into Supabase via Ktor socket             │
+    │     (no RAM caching — zero OOM risk)          │
+    │                                               │
+    │  5. Progress pinged to Firestore ──────────── │──► Live UI update
+    │     every ~5%                                 │
+    │                                               │
+    │  6. Status → SENT ──────────────────────────► │
+    │                                               │
+    │                               7. DownloadManager invoked
+    │                                  Download ID → DataStore
+    │                                  File saved to device ✓
+\```
+
+---
+
+## ✦ Tech Stack
+
+<table>
+<tr>
+<td><b>🟣 Kotlin</b></td>
+<td>Primary language — idiomatic, functional, expressive</td>
+</tr>
+<tr>
+<td><b>🎨 Jetpack Compose</b></td>
+<td>Fully declarative UI — no XML, no compromises</td>
+</tr>
+<tr>
+<td><b>🔥 Firebase Firestore</b></td>
+<td>NoSQL real-time document streams powering live sync</td>
+</tr>
+<tr>
+<td><b>🟢 Supabase Storage</b></td>
+<td>Object storage with byte-chunked Ktor streams — no OOM</td>
+</tr>
+<tr>
+<td><b>⚙️ WorkManager</b></td>
+<td>Parallel, reliable background upload orchestration</td>
+</tr>
+<tr>
+<td><b>📥 DownloadManager</b></td>
+<td>OS-native massive file retrieval and caching</td>
+</tr>
+<tr>
+<td><b>🌊 Coroutines & Flow</b></td>
+<td>StateFlow · SharedFlow · callbackFlow — full async pipeline</td>
+</tr>
+<tr>
+<td><b>💽 DataStore</b></td>
+<td>Preferences persistence for crash-safe download pointers</td>
+</tr>
+<tr>
+<td><b>🖼️ Coil</b></td>
+<td>Memory-efficient image decoding and URI projection</td>
+</tr>
+</table>
+
+---
+
+## ✦ Screenshots
 
 <p align="center">
   <img src="screenshots/home.png" width="30%" alt="Home Screen"/>
@@ -72,54 +156,61 @@ RelayX strictly adheres to **Clean Architecture** patterns married with the **MV
   &nbsp;&nbsp;&nbsp;
   <img src="screenshots/transfers_downloading.png" width="30%" alt="Download in Progress"/>
 </p>
+<p align="center">
+  <sub>Home Screen &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Upload in Progress &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Download in Progress</sub>
+</p>
 
 ---
 
-## ⚠️ Important Notes
+## ✦ Setup
 
-* **Firestore Composite Indexes**: The app natively relies on dual-query operators (`senderCode == user OR receiverCode == user` paired with `.orderBy("timestamp")`). This absolutely requires configuring Composite Indexes manually in the Firebase Console. Without them, the real-time listener will abort.
-* **Active Internet Connection:** RelayX negotiates payloads over external cloud resources. Performance binds exactly to the device's uplink/downlink capacities.
+\```bash
+# 1. Clone
+git clone https://github.com/yourusername/RelayX.git
+\```
 
----
+**2. Add Firebase**
+Download `google-services.json` from the Firebase Console → drop it in `/app`. Enable Firestore.
 
-## 🛠️ Setup Instructions
+**3. Add Supabase credentials**
+Create / edit `local.properties` in the project root:
+\```properties
+SUPABASE_URL="https://your-project-id.supabase.co"
+SUPABASE_KEY="your-anon-key-here"
+\```
 
-To get RelayX running locally:
+**4. Build & Run**
+Sync Gradle and deploy to a **physical device** — emulators bottleneck hard on heavy I/O.
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/yourusername/RelayX.git
-   ```
-2. **Inject Firebase:**
-   Download your unique `google-services.json` file from the Firebase Console and place it natively inside the `/app` directory. Ensure Firestore is enabled in the cloud.
-3. **Provide Supabase Credentials:** 
-   RelayX utilizes `local.properties` to abstract sensitive remote tokens. Create (or edit) your `local.properties` file in the project root:
-   ```properties
-   SUPABASE_URL="https://your-project-id.supabase.co"
-   SUPABASE_KEY="your-anon-key-here"
-   ```
-4. **Build & Run:** 
-   Sync Gradle and deploy to a physical device (Emulators may bottleneck heavily on heavy I/O operations).
+> ⚠️ **Firestore Composite Indexes required.** The dual-query listener (`senderCode == user OR receiverCode == user` + `.orderBy("timestamp")`) will abort without them. Configure manually in the Firebase Console.
 
 ---
 
-## 🔐 Security Considerations
+## ✦ Security
 
-* **Key Abstraction**: Neither Supabase keys nor Google Services descriptors are committed to Version Control, leveraging `BuildConfig` string injection via local environment variable mapping.
-* **Ephemeral Persistence**: Code collisions are mitigated safely upon Firestore doc creations.
-
----
-
-## 🚀 Future Improvements
-
-1. **FCM Push Notifications**: Awaken receiver devices via Firebase Cloud Messaging exclusively when a transfer is pushed.
-2. **Resumable Uploads**: Extend Ktor to interpret partial-streams in the event of hard network cutouts.
-3. **End-to-End Encryption**: Wrap the native `InputStream` in symmetric key AES-256 before socket dispatch. The receiver must decrypt manually when pulling from Supabase.
+- 🔑 Supabase keys and `google-services.json` are **never committed** — injected at build time via `BuildConfig` from `local.properties`
+- 🔄 Code collisions are safely mitigated on Firestore document creation
 
 ---
 
-### 👨‍💻 Author
+## ✦ What's Next
 
-**Vaibhav** 
-*Android Developer*
-Passionate about deeply structural application design, low-level operational resilience, and delightful native interface implementation.
+\```
+[ ] FCM Push Notifications   — wake receiver devices the moment a transfer is pushed
+[ ] Resumable Uploads        — Ktor partial-stream recovery on hard network cutouts
+[ ] End-to-End Encryption    — AES-256 wrapping the InputStream before socket dispatch
+\```
+
+---
+
+<div align="center">
+
+**Built by Vaibhav**
+
+*Android Developer — obsessed with structural depth, operational resilience, and native interfaces that feel right.*
+
+<br/>
+
+*If RelayX saved you from AirDrop, give it a ⭐*
+
+</div>
