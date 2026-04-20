@@ -51,6 +51,10 @@ class UserRepositoryImpl(
         return getSavedCode()
     }
 
+    override suspend fun doesUserExist(code: String): Boolean {
+        return firestoreService.doesUserExist(code)
+    }
+
     private suspend fun getSavedCode(): String? {
         return context.dataStore.data
             .map { preferences -> preferences[KEY_USER_CODE] }

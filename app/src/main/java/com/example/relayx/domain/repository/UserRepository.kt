@@ -15,4 +15,9 @@ interface UserRepository {
      * Returns the locally saved user code, or null if not yet generated.
      */
     suspend fun getCurrentUserCode(): String?
+
+    /**
+     * Verifies if a user with the given code exists in Firestore.
+     */
+    suspend fun doesUserExist(code: String): Boolean
 }

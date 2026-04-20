@@ -13,6 +13,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.relayx.data.model.Transfer
 import com.example.relayx.data.model.TransferStatus
+import com.example.relayx.domain.usecase.CheckUserExistsUseCase
 import com.example.relayx.domain.usecase.ObserveTransfersUseCase
 import com.example.relayx.domain.usecase.SendFileUseCase
 import com.example.relayx.utils.FileUtils
@@ -75,7 +76,8 @@ data class TransferUiState(
 class TransferViewModel(
     application: Application,
     private val sendFileUseCase: SendFileUseCase,
-    private val observeTransfersUseCase: ObserveTransfersUseCase
+    private val observeTransfersUseCase: ObserveTransfersUseCase,
+    private val checkUserExistsUseCase: CheckUserExistsUseCase
 ) : AndroidViewModel(application) {
 
     // ─── Firestore transfers (real-time from snapshot listener) ──────────
@@ -341,32 +343,46 @@ class TransferViewModel(
             return
         }
 
-        val workManager = WorkManager.getInstance(getApplication())
+        viewModelScope.launch {
+            // Validate if the user exists
+            _uiState.value = state.copy(error = null) // Clear previous errors
+            val userExists = checkUserExistsUseCase(receiverCode)
 
-        // Enqueue a WorkManager task for each file
-        files.forEach { (uri, fileName) ->
-            Log.d(TAG, "ViewModel: Enqueueing UploadWorker for $fileName")
-            val workData = workDataOf(
-                "fileUri" to uri.toString(),
-                "senderCode" to senderCode,
-                "receiverCode" to receiverCode,
-                "fileName" to fileName
+            if (!userExists) {
+                Log.e(TAG, "ViewModel: Receiver code does not exist.")
+                _uiState.value = _uiState.value.copy(error = "Invalid receiver code. Please check and try again.")
+                return@launch
+            }
+
+            Log.d(TAG, "ViewModel: validation passed ✅ Receiver exists.")
+
+            val workManager = WorkManager.getInstance(getApplication())
+
+            // Enqueue a WorkManager task for each file
+            files.forEach { (uri, fileName) ->
+                Log.d(TAG, "ViewModel: Enqueueing UploadWorker for $fileName")
+                val workData = workDataOf(
+                    "fileUri" to uri.toString(),
+                    "senderCode" to senderCode,
+                    "receiverCode" to receiverCode,
+                    "fileName" to fileName
+                )
+                val uploadWorkRequest = OneTimeWorkRequestBuilder<UploadWorker>()
+                    .setInputData(workData)
+                    .build()
+
+                workManager.enqueue(uploadWorkRequest)
+            }
+
+            // Show success, clear inputs
+            _uiState.value = _uiState.value.copy(
+                sendSuccess = true,
+                selectedFiles = emptyList(),
+                receiverCode = ""
             )
-            val uploadWorkRequest = OneTimeWorkRequestBuilder<UploadWorker>()
-                .setInputData(workData)
-                .build()
-
-            workManager.enqueue(uploadWorkRequest)
+            Log.d(TAG, "ViewModel: All file uploads enqueued.")
+            Log.d(TAG, "═══════════════════════════════════════════════")
         }
-
-        // Show success, clear inputs
-        _uiState.value = _uiState.value.copy(
-            sendSuccess = true,
-            selectedFiles = emptyList(),
-            receiverCode = ""
-        )
-        Log.d(TAG, "ViewModel: All file uploads enqueued.")
-        Log.d(TAG, "═══════════════════════════════════════════════")
     }
 
     fun clearError() {

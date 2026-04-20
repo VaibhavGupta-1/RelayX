@@ -8,6 +8,7 @@ import com.example.relayx.domain.repository.UserRepository
 import com.example.relayx.domain.usecase.GetUserCodeUseCase
 import com.example.relayx.domain.usecase.ObserveTransfersUseCase
 import com.example.relayx.domain.usecase.SendFileUseCase
+import com.example.relayx.domain.usecase.CheckUserExistsUseCase
 import com.example.relayx.services.FirestoreService
 import com.example.relayx.services.SupabaseService
 import com.example.relayx.data.local.DownloadStateStore
@@ -58,5 +59,9 @@ class AppContainer(private val context: Context) {
 
     val observeTransfersUseCase: ObserveTransfersUseCase by lazy {
         ObserveTransfersUseCase(transferRepository)
+    }
+
+    val checkUserExistsUseCase: CheckUserExistsUseCase by lazy {
+        CheckUserExistsUseCase(userRepository)
     }
 }

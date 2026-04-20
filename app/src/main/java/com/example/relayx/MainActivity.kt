@@ -44,7 +44,8 @@ class MainActivity : ComponentActivity() {
                     factory = TransferViewModelFactory(
                         application,
                         appContainer.sendFileUseCase,
-                        appContainer.observeTransfersUseCase
+                        appContainer.observeTransfersUseCase,
+                        appContainer.checkUserExistsUseCase
                     )
                 )
 
